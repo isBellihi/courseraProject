@@ -6,18 +6,14 @@ const Currency = mongoose.Types.Currency;
 const commentSchema = new Schema({
     rating : {
         type : Number,
-        required : true,
         max : 5,
         min : 1
     },
     comment : {
-        type : String,
-        required : true
+        type : String
     },
     author : {
-        type :String,
-        required : true
-    }
+        type :String    }
 },{
     timestamps : true
 });
