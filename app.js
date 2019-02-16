@@ -28,9 +28,22 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser('1234'));
 
+var session = require('express-session');
+var FileStore = require('session-file-store')(session);
+
+
+app.use(session({
+  name: 'session-id',
+  secret: '1234',
+  saveUninitialized: false,
+  resave: false,
+  store: new FileStore()
+}));
+
 function auth (req, res, next) {
 
-  if(!req.signedCookies.user){
+  //if(!req.signedCookies.user){
+  if(!req.session.user){
     var authHeader = req.headers.authorization;
     if (!authHeader) {
         var err = new Error('You are not authenticated!');
@@ -44,7 +57,8 @@ function auth (req, res, next) {
     var user = auth[0];
     var pass = auth[1];
     if (user == 'admin' && pass == 'password') {
-        res.cookie('user','admin',{signed : true});
+        //res.cookie('user','admin',{signed : true});
+        req.session.user = 'admin';
         next(); // authorized
     } else {
         var err = new Error('You are not authenticated!');
@@ -53,7 +67,8 @@ function auth (req, res, next) {
         next(err);
     }
   }else{
-    if(req.signedCookies.user === 'admin'){
+    //if(req.signedCookies.user === 'admin'){
+    if(req.session.user == 'admin'){
       next(); //authorized
     }else{
       var err = new Error('You are not authenticated!');
