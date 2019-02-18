@@ -2,6 +2,8 @@ const express  = require('express');
 const bodyParser = require('body-parser');
 const DishRouer = express.Router();
 
+const authenticate = require('../authenticate');
+
 DishRouer.use(bodyParser.json());
 
 const Dishes = require('../models/dishes');
@@ -16,7 +18,7 @@ DishRouer.route('/')
     },(err)=>next(err))
     .catch((err)=>next(err));
 })
-.post((req,res,next)=>{
+.post(authenticate.verifyUser, (req,res,next)=>{
     res.statusCode = 200;
     res.setHeader('Content-type','application/json');
     Dishes.create(req.body)
@@ -28,11 +30,11 @@ DishRouer.route('/')
     },(err)=> next(err))
     .catch((err)=>next(err));
 })
-.put((req,res,next)=>{
+.put(authenticate.verifyUser, (req,res,next)=>{
     res.statusCode = 403
     res.end('Put operation not supported on this url ');
 })
-.delete((req,res,next)=>{
+.delete(authenticate.verifyUser, (req,res,next)=>{
     Dishes.remove({})
     .then((result)=>{
         res.statusCode = 200; 
@@ -53,11 +55,11 @@ DishRouer.route('/:dishid')
     },(err)=>next(err))
     .catch((err)=>next(err));
 })
-.post((req,res,next)=>{
+.post(authenticate.verifyUser, (req,res,next)=>{
     res.statusCode = 403
     res.end('Post operation not supported on /dish/'+ req.params.dishid + ' !');
 })
-.put((req,res,next)=>{
+.put(authenticate.verifyUser, (req,res,next)=>{
     Dishes.findByIdAndUpdate(req.params.dishid,{
         $set : req.body
     },{new : true}).then((dish)=>{
@@ -67,7 +69,7 @@ DishRouer.route('/:dishid')
     },(err)=>next(err))
     .catch((err)=>next(err));
 })
-.delete((req,res,next)=>{
+.delete(authenticate.verifyUser, (req,res,next)=>{
     Dishes.findByIdAndRemove(req.params.dishid)
     .then((result)=>{
         res.statusCode = 200 ;
@@ -96,7 +98,7 @@ DishRouer.route('/:dishid/comments')
     },(err)=>next(err))
     .catch((err)=>next(err));
 })
-.post((req,res,next)=>{
+.post(authenticate.verifyUser, (req,res,next)=>{
     Dishes.findById(req.params.dishid)
     .then((dish)=>{
         if(dish != null){
@@ -114,11 +116,11 @@ DishRouer.route('/:dishid/comments')
     },(err)=>next(err))
     .catch((err)=>next(err));
 })
-.put((req,res,next)=>{
+.put(authenticate.verifyUser, (req,res,next)=>{
     res.statusCode = 403
     res.end('Put operation not supported on /dishes/' + req.params.dishid + '/comments');
 })
-.delete((req,res,next)=>{
+.delete(authenticate.verifyUser, (req,res,next)=>{
     Dishes.findById(req.params.dishid)
     .then((dish)=>{
         if(dish != null){
@@ -164,11 +166,11 @@ DishRouer.route('/:dishid/comments/:commentid')
     },(err)=>next(err))
     .catch((err)=>next(err));
 })
-.post((req,res,next)=>{
+.post(authenticate.verifyUser, (req,res,next)=>{
     res.statusCode = 403
     res.end('Post operation not supported on /dish/'+ req.params.dishid + '/comments/' + req.params.commentid + ' !');
 })
-.put((req,res,next)=>{
+.put(authenticate.verifyUser, (req,res,next)=>{
     Dishes.findById(req.params.dishid)
     .then((dish)=>{
         if(dish != null && dish.comments.id(req.params.commentid) != null){
@@ -196,7 +198,7 @@ DishRouer.route('/:dishid/comments/:commentid')
     },(err)=>next(err))
     .catch((err)=>next(err));
 })
-.delete((req,res,next)=>{
+.delete(authenticate.verifyUser, (req,res,next)=>{
     Dishes.findById(req.params.dishid)
     .then((dish)=>{
         if(dish != null && dish.comments.id(req.params.commentid) != null){
