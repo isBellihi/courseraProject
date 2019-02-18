@@ -13,6 +13,7 @@ DishRouer.route('/')
     res.statusCode = 200 ;
     res.setHeader('Content-type','application/json');
     Dishes.find({})
+    .populate('comments.author')
     .then((dishes)=>{
         res.json(dishes);
     },(err)=>next(err))
@@ -48,6 +49,7 @@ DishRouer.route('/')
 DishRouer.route('/:dishid')
 .get((req,res,next)=>{
     Dishes.findById(req.params.dishid)
+    .populate('comments.author')
     .then((dish)=>{
         res.statusCode = 200 ;
         res.setHeader('Contenet-type','application/json');
@@ -85,6 +87,7 @@ DishRouer.route('/:dishid')
 DishRouer.route('/:dishid/comments')
 .get((req,res,next)=>{
     Dishes.findById(req.params.dishid)
+    .populate('comments.author')
     .then((dish)=>{
         if(dish != null){
             res.statusCode = 200 ;
@@ -102,12 +105,17 @@ DishRouer.route('/:dishid/comments')
     Dishes.findById(req.params.dishid)
     .then((dish)=>{
         if(dish != null){
+            req.body.author = req.user._id;
             dish.comments.push(req.body);
             dish.save()
             .then((dish)=>{
-                res.statusCode = 200 ;
-                res.setHeader('Content-type','application/json');
-                res.json(dish);
+                Dishes.findById(dish._id)
+                    .populate('comments.author')
+                    .then((dish)=>{
+                        res.statusCode = 200 ;
+                        res.setHeader('Content-type','application/json');
+                        res.json(dish);
+                    });
             },(err)=>next(err));        }else{
             err = new Error("Dish " + req.params.dishid + " not found");
             res.statusCode = 404 ;
@@ -149,6 +157,7 @@ DishRouer.route('/:dishid/comments')
 DishRouer.route('/:dishid/comments/:commentid')
 .get((req,res,next)=>{
     Dishes.findById(req.params.dishid)
+    .populate('comments.author')
     .then((dish)=>{
         if(dish != null && dish.comments.id(req.params.commentid) != null){
                 res.statusCode = 200 ;
@@ -182,9 +191,13 @@ DishRouer.route('/:dishid/comments/:commentid')
             }
             dish.save()
             .then((dish)=>{
-                res.statusCode = 200 ;
-                res.setHeader('Content-type','application/json');
-                res.json(dish);
+                Dishes.findById(dish._id)
+                .populate('comments.author')
+                .then((dish)=>{
+                    res.statusCode = 200 ;
+                    res.setHeader('Content-type','application/json');
+                    res.json(dish);
+                });
             },(err)=>next(err));
         }else if(dish==null){
             err = new Error("Dish " + req.params.dishid + " not found");
@@ -205,9 +218,13 @@ DishRouer.route('/:dishid/comments/:commentid')
             dish.comments.id(req.params.commentid).remove();
             dish.save()
             .then((dish)=>{
-                res.statusCode = 200 ;
-                res.setHeader('Content-type' , 'application/json');
-                res.json(dish);
+                Dishes.findById(dish._id)
+                .populate('comments.author')
+                .than((dish)=>{
+                    res.statusCode = 200 ;
+                    res.setHeader('Content-type' , 'application/json');
+                    res.json(dish);
+                });
             },(err)=>next(err));
         }else if(dish == null){
             err = new Error('Dish ' + req.params.dishid + ' not found !!');

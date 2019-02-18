@@ -17,7 +17,7 @@ var config = require('./config');
 
 const mongoose = require('mongoose');
 const url = config.mongourl;
-var connect = mongoose.connect(url);
+var connect = mongoose.connect(url,{ useNewUrlParser:true });
 connect.then(()=>{
   console.log('Connect correctly to the server !');
 },(err)=> console.log(err));

@@ -7,13 +7,17 @@ const commentSchema = new Schema({
     rating : {
         type : Number,
         max : 5,
-        min : 1
+        min : 1,
+        required :true
     },
     comment : {
-        type : String
+        type : String,
+        required : true,
     },
     author : {
-        type :String    }
+        type :mongoose.Schema.Types.ObjectId,
+        ref : 'User'
+    }
 },{
     timestamps : true
 });
