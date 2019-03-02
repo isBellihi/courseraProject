@@ -19,7 +19,7 @@ DishRouer.route('/')
     },(err)=>next(err))
     .catch((err)=>next(err));
 })
-.post(authenticate.verifyUser, (req,res,next)=>{
+.post(authenticate.verifyUser,authenticate.verifyAdmin, (req,res,next)=>{
     res.statusCode = 200;
     res.setHeader('Content-type','application/json');
     Dishes.create(req.body)
@@ -31,11 +31,11 @@ DishRouer.route('/')
     },(err)=> next(err))
     .catch((err)=>next(err));
 })
-.put(authenticate.verifyUser, (req,res,next)=>{
+.put(authenticate.verifyUser,authenticate.verifyAdmin, (req,res,next)=>{
     res.statusCode = 403
     res.end('Put operation not supported on this url ');
 })
-.delete(authenticate.verifyUser, (req,res,next)=>{
+.delete(authenticate.verifyUser,authenticate.verifyAdmin, (req,res,next)=>{
     Dishes.remove({})
     .then((result)=>{
         res.statusCode = 200; 
@@ -57,11 +57,11 @@ DishRouer.route('/:dishid')
     },(err)=>next(err))
     .catch((err)=>next(err));
 })
-.post(authenticate.verifyUser, (req,res,next)=>{
+.post(authenticate.verifyUser,authenticate.verifyAdmin, (req,res,next)=>{
     res.statusCode = 403
     res.end('Post operation not supported on /dish/'+ req.params.dishid + ' !');
 })
-.put(authenticate.verifyUser, (req,res,next)=>{
+.put(authenticate.verifyUser,authenticate.verifyAdmin, (req,res,next)=>{
     Dishes.findByIdAndUpdate(req.params.dishid,{
         $set : req.body
     },{new : true}).then((dish)=>{
@@ -71,7 +71,7 @@ DishRouer.route('/:dishid')
     },(err)=>next(err))
     .catch((err)=>next(err));
 })
-.delete(authenticate.verifyUser, (req,res,next)=>{
+.delete(authenticate.verifyUser,authenticate.verifyAdmin, (req,res,next)=>{
     Dishes.findByIdAndRemove(req.params.dishid)
     .then((result)=>{
         res.statusCode = 200 ;
@@ -128,7 +128,7 @@ DishRouer.route('/:dishid/comments')
     res.statusCode = 403
     res.end('Put operation not supported on /dishes/' + req.params.dishid + '/comments');
 })
-.delete(authenticate.verifyUser, (req,res,next)=>{
+.delete(authenticate.verifyUser,authenticate.verifyAdmin, (req,res,next)=>{
     Dishes.findById(req.params.dishid)
     .then((dish)=>{
         if(dish != null){
@@ -179,9 +179,15 @@ DishRouer.route('/:dishid/comments/:commentid')
     res.statusCode = 403
     res.end('Post operation not supported on /dish/'+ req.params.dishid + '/comments/' + req.params.commentid + ' !');
 })
-.put(authenticate.verifyUser, (req,res,next)=>{
+.put(authenticate.verifyUser,(req,res,next)=>{
     Dishes.findById(req.params.dishid)
+    .populate('comments.author')
     .then((dish)=>{
+        if(!dish.comments.id(req.params.commentid).author._id.equals(req.user._id)){
+            var err = new Error("You are not authorized to perform this operation! put only for owner of the comments!!");
+            err.status = 403;
+            return next(err);
+        }
         if(dish != null && dish.comments.id(req.params.commentid) != null){
             if(req.body.rating){
                 dish.comments.id(req.params.commentid).rating = req.body.rating ;
@@ -214,17 +220,23 @@ DishRouer.route('/:dishid/comments/:commentid')
 .delete(authenticate.verifyUser, (req,res,next)=>{
     Dishes.findById(req.params.dishid)
     .then((dish)=>{
+        if(!dish.comments.id(req.params.commentid).author._id.equals(req.user._id)){
+            var err = new Error("You are not authorized to perform this operation! delete only for owner of the comments!!");
+            err.status = 403;
+            return next(err);
+        }
         if(dish != null && dish.comments.id(req.params.commentid) != null){
             dish.comments.id(req.params.commentid).remove();
             dish.save()
             .then((dish)=>{
                 Dishes.findById(dish._id)
                 .populate('comments.author')
-                .than((dish)=>{
+                .then((dish)=>{
                     res.statusCode = 200 ;
                     res.setHeader('Content-type' , 'application/json');
                     res.json(dish);
-                });
+                })
+                .catch((err)=>next(err));
             },(err)=>next(err));
         }else if(dish == null){
             err = new Error('Dish ' + req.params.dishid + ' not found !!');
