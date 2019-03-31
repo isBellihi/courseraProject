@@ -32,7 +32,7 @@ DishRouer.route('/')
     .catch((err)=>next(err));
 })
 .put(authenticate.verifyUser,authenticate.verifyAdmin, (req,res,next)=>{
-    res.statusCode = 403
+    res.statusCode = 403;
     res.end('Put operation not supported on this url ');
 })
 .delete(authenticate.verifyUser,authenticate.verifyAdmin, (req,res,next)=>{
